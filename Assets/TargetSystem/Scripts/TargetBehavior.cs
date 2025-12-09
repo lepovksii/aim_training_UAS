@@ -4,7 +4,7 @@ public class TargetBehavior : MonoBehaviour
 {
     [Header("Movement Settings")]
     public float moveSpeed = 1.5f;
-    public float moveRange = 1.0f;
+    public float moveRange = 1f;
     public bool useZigZag = true;
 
     private Vector3 startPos;
@@ -23,7 +23,8 @@ public class TargetBehavior : MonoBehaviour
         lifetime += Time.deltaTime;
         if (lifetime >= maxLifetime)
         {
-            Destroy(gameObject); // Auto delete
+            Destroy(gameObject);
+            return;
         }
 
         HandleMovement();

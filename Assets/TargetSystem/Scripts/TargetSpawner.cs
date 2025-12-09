@@ -2,19 +2,21 @@ using UnityEngine;
 
 public class TargetSpawner : MonoBehaviour
 {
-    [Header("Target Settings")]
     public GameObject targetPrefab;
     public float spawnInterval = 1.5f;
     public int maxTargets = 5;
 
-    [Header("Spawn Area")]
     public Vector3 areaSize = new Vector3(5, 2, 5);
 
     private float timer;
 
     void Update()
     {
+        if (!GameManager.Instance.IsPlaying())
+            return;
+
         timer += Time.deltaTime;
+
         if (timer >= spawnInterval)
         {
             timer = 0f;
@@ -35,7 +37,6 @@ public class TargetSpawner : MonoBehaviour
         );
 
         Vector3 spawnPos = transform.position + randomPos;
-
         Instantiate(targetPrefab, spawnPos, Quaternion.identity);
     }
 
