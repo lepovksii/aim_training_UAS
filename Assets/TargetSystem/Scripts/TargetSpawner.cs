@@ -2,33 +2,38 @@ using UnityEngine;
 
 public class TargetSpawner : MonoBehaviour
 {
+    [Header("Target Settings")]
     public GameObject targetPrefab;
-    public float spawnInterval = 1.5f;
     public int maxTargets = 5;
 
+    [Header("Spawn Area")]
     public Vector3 areaSize = new Vector3(5, 2, 5);
 
-    private float timer;
+    [Header("References")]
+    public AIDifficultyManager difficulty;
+    public AIAnalyzer analyzer;
 
-    void Update()
+    private float timer;
+    private float baseSpawnInterval = 1.5f;
+
+    private void Update()
     {
-        if (!GameManager.Instance.IsPlaying())
-            return;
+        if (!GameManager.Instance.IsPlaying()) return;
+
+        // spawn rate mengikuti AI difficulty
+        float currentInterval = baseSpawnInterval / difficulty.spawnRateMultiplier;
 
         timer += Time.deltaTime;
-
-        if (timer >= spawnInterval)
+        if (timer >= currentInterval)
         {
             timer = 0f;
 
             if (CountTargets() < maxTargets)
-            {
                 SpawnTarget();
-            }
         }
     }
 
-    void SpawnTarget()
+    private void SpawnTarget()
     {
         Vector3 randomPos = new Vector3(
             Random.Range(-areaSize.x / 2, areaSize.x / 2),
@@ -36,18 +41,22 @@ public class TargetSpawner : MonoBehaviour
             Random.Range(-areaSize.z / 2, areaSize.z / 2)
         );
 
-        Vector3 spawnPos = transform.position + randomPos;
-        Instantiate(targetPrefab, spawnPos, Quaternion.identity);
+        GameObject obj = Instantiate(targetPrefab, transform.position + randomPos, Quaternion.identity);
+
+        // --- APPLY DIFFICULTY ---
+        obj.transform.localScale = Vector3.one * difficulty.sizeMultiplier;
+
+        TargetBehavior tb = obj.GetComponent<TargetBehavior>();
+        if (tb != null)
+        {
+            tb.moveSpeed *= difficulty.speedMultiplier;
+        }
+
+        analyzer?.OnTargetSpawned();
     }
 
-    int CountTargets()
+    private int CountTargets()
     {
         return FindObjectsOfType<TargetBehavior>().Length;
-    }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireCube(transform.position, areaSize);
     }
 }

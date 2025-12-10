@@ -2,130 +2,109 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    public static GameManager Instance { get; private set; }
+    public static GameManager Instance;
 
-    [Header("Game Settings")]
     public float sessionDuration = 60f;
 
-    [Header("References")]
     public TargetSpawner targetSpawner;
-    public GameObject startMenu;        // prefab StartMenu di scene
-    public HUDController hud;           // script HUD yang akan kita buat di bawah
+    public GameObject startMenu;
+    public HUDController hud;
+
+    [Header("AI System")]
+    public AIAnalyzer analyzer;
+    public AIDifficultyManager difficultyManager;
+    public AIGrading grading;
 
     [Header("Audio")]
     public AudioSource bgmSource;
     public AudioSource sfxSource;
     public AudioClip hitClip;
 
-    private float timeRemaining;
+    private float timer;
     private int hits;
     private int shots;
     private bool isPlaying;
 
-    void Awake()
+    private void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
         Instance = this;
-        // Jika mau GameManager tidak hancur ketika ganti scene:
-        // DontDestroyOnLoad(gameObject);
     }
 
-    void Start()
+    private void Start()
     {
         StopSession();
     }
 
-    void Update()
+    private void Update()
     {
         if (!isPlaying) return;
 
-        timeRemaining -= Time.deltaTime;
-        if (timeRemaining < 0f)
+        timer -= Time.deltaTime;
+        if (timer <= 0)
         {
-            timeRemaining = 0f;
+            timer = 0;
             EndSession();
         }
 
-        if (hud != null)
-        {
-            hud.UpdateHUD(hits, shots, timeRemaining);
-        }
+        hud.UpdateHUD(hits, shots, timer);
     }
 
     public void StartSession()
     {
+        isPlaying = true;
+        timer = sessionDuration;
+
         hits = 0;
         shots = 0;
-        timeRemaining = sessionDuration;
-        isPlaying = true;
 
-        if (startMenu != null) startMenu.SetActive(false);
-        if (targetSpawner != null) targetSpawner.enabled = true;
+        analyzer?.ResetStats();
 
-        if (bgmSource != null && !bgmSource.isPlaying)
+        startMenu.SetActive(false);
+        targetSpawner.enabled = true;
+
+        if (bgmSource != null)
         {
             bgmSource.loop = true;
             bgmSource.Play();
         }
 
-        if (hud != null)
-        {
-            hud.UpdateHUD(hits, shots, timeRemaining);
-        }
+        hud.UpdateHUD(hits, shots, timer);
     }
 
     public void EndSession()
     {
         isPlaying = false;
+        targetSpawner.enabled = false;
 
-        if (targetSpawner != null) targetSpawner.enabled = false;
+        startMenu.SetActive(true);
 
-        if (startMenu != null)
-        {
-            startMenu.SetActive(true);
-        }
+        if (grading != null)
+            Debug.Log("Final Grade: " + grading.GetFinalGrade());
     }
 
     public void StopSession()
     {
         isPlaying = false;
-        timeRemaining = 0f;
+        timer = 0;
+        targetSpawner.enabled = false;
+        startMenu.SetActive(true);
 
-        if (targetSpawner != null) targetSpawner.enabled = false;
-        if (startMenu != null) startMenu.SetActive(true);
-
-        if (hud != null)
-        {
-            hud.UpdateHUD(hits, shots, timeRemaining);
-        }
+        hud.UpdateHUD(hits, shots, timer);
     }
 
     public void RegisterShot()
     {
         shots++;
-        if (hud != null)
-        {
-            hud.UpdateHUD(hits, shots, timeRemaining);
-        }
+        hud.UpdateHUD(hits, shots, timer);
     }
 
     public void RegisterHit()
     {
         hits++;
-
         if (sfxSource != null && hitClip != null)
-        {
             sfxSource.PlayOneShot(hitClip);
-        }
 
-        if (hud != null)
-        {
-            hud.UpdateHUD(hits, shots, timeRemaining);
-        }
+        hud.UpdateHUD(hits, shots, timer);
     }
 
     public bool IsPlaying()

@@ -4,9 +4,14 @@ public class StartButtonTarget : MonoBehaviour
 {
     public void OnHit()
     {
-        if (GameManager.Instance != null)
+        Debug.Log("StartButton HIT!");
+
+        if (GameManager.Instance == null)
         {
-            GameManager.Instance.StartSession();
+            Debug.LogError("GameManager.Instance NULL!");
+            return;
         }
+
+        GameManager.Instance.StartSession();
     }
 }

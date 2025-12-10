@@ -2,16 +2,13 @@ using UnityEngine;
 
 public class TargetBehavior : MonoBehaviour
 {
-    [Header("Movement Settings")]
-    public float moveSpeed = 1.5f;
+    public float moveSpeed = 1f;
     public float moveRange = 1f;
     public bool useZigZag = true;
 
-    private Vector3 startPos;
-
-    [Header("Lifetime Settings")]
-    public float maxLifetime = 5f;
     private float lifetime;
+    public float maxLifetime = 5f;
+    private Vector3 startPos;
 
     void Start()
     {
@@ -22,25 +19,15 @@ public class TargetBehavior : MonoBehaviour
     {
         lifetime += Time.deltaTime;
         if (lifetime >= maxLifetime)
-        {
             Destroy(gameObject);
-            return;
-        }
 
-        HandleMovement();
+        MovePattern();
     }
 
-    void HandleMovement()
+    void MovePattern()
     {
-        if (useZigZag)
-        {
-            float offset = Mathf.Sin(Time.time * moveSpeed) * moveRange;
-            transform.position = new Vector3(startPos.x + offset, startPos.y, startPos.z);
-        }
-        else
-        {
-            transform.position += Vector3.up * Mathf.Sin(Time.time * moveSpeed) * 0.001f;
-        }
+        float offset = Mathf.Sin(Time.time * moveSpeed) * moveRange;
+        transform.position = new Vector3(startPos.x + offset, startPos.y, startPos.z);
     }
 
     public void OnHit()

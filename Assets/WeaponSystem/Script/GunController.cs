@@ -4,47 +4,48 @@ public class GunController : MonoBehaviour
 {
     public Transform firePoint;
     public float range = 100f;
-    public LayerMask targetLayer;
-
     public ParticleSystem muzzleFlash;
     public AudioSource audioSource;
     public AudioClip fireSound;
-
-    void Update()
-    {
-        // VR/PC input — sesuaikan sesuai XR Device Simulator atau VR controller nanti
-        if (Input.GetButtonDown("Fire1"))
-        {
-            Shoot();
-            GameManager.Instance.RegisterShot();
-        }
-    }
+    public AIAnalyzer analyzer;
 
     public void Shoot()
     {
+        GameManager.Instance?.RegisterShot();
+
         if (muzzleFlash != null) muzzleFlash.Play();
-        if (audioSource != null && fireSound != null) audioSource.PlayOneShot(fireSound);
+        if (audioSource != null && fireSound != null)
+            audioSource.PlayOneShot(fireSound);
 
         RaycastHit hit;
-        if (Physics.Raycast(firePoint.position, firePoint.forward, out hit, range, targetLayer))
+        if (Physics.Raycast(firePoint.position, firePoint.forward, out hit, range))
         {
-            Debug.Log("Hit: " + hit.transform.name);
-
-            // Jika target punya script StartButtonTarget (button start)
-            StartButtonTarget startBtn = hit.transform.GetComponent<StartButtonTarget>();
-            if (startBtn != null)
+            // 1. START MENU BUTTON
+            StartButtonTarget startButton = hit.transform.GetComponent<StartButtonTarget>();
+            if (startButton != null)
             {
-                startBtn.OnHit();
+                startButton.OnHit();
                 return;
             }
 
-            // Jika target biasa
-            TargetBehavior target = hit.transform.GetComponent<TargetBehavior>();
-            if (target != null)
+            // 2. TARGET BIASA
+            if (hit.transform.CompareTag("Target"))
             {
-                target.OnHit();
-                GameManager.Instance.RegisterHit();
+                GameManager.Instance?.RegisterHit();
+                analyzer?.OnTargetHit();
+
+                TargetBehavior tb = hit.transform.GetComponent<TargetBehavior>();
+                if (tb != null) tb.OnHit();
+                else Destroy(hit.transform.gameObject);
             }
+            else
+            {
+                analyzer?.OnMiss();
+            }
+        }
+        else
+        {
+            analyzer?.OnMiss();
         }
     }
 }
